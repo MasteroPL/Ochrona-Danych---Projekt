@@ -1,0 +1,15 @@
+DELETE DATABASE IF EXISTS fileshare;
+CREATE DATABASE fileshare DEFAULT CHARACTER SET utf8 COLLATE utf8_polish_ci;
+
+USE fileshare;
+
+CREATE TABLE user (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+    login VARCHAR(20) NOT NULL UNIQUE,
+    password_hash VARCHAR(256) NOT NULL
+);
+
+CREATE TABLE user_file (
+    
+)
