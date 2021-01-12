@@ -1,1 +1,1 @@
-from .general import *
+from .common_views import *
