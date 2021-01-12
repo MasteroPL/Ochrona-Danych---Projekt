@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_login import LoginManager as FlaskLoginManager
 import config
 from models.mysql import MySQL
 
@@ -11,3 +12,5 @@ mysql = MySQL(
     "fileshare",
     autocommit=False
 )
+login_manager = FlaskLoginManager()
+login_manager.init_app(app)

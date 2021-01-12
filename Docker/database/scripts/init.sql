@@ -13,9 +13,9 @@ CREATE TABLE user (
 CREATE TABLE user_file (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
+    file_code VARCHAR(36) NOT NULL UNIQUE,
     file_path VARCHAR(256) NOT NULL,
     file_name VARCHAR(50) NOT NULL,
-    file_extension VARCHAR(10) NOT NULL,
     is_public BOOLEAN NOT NULL DEFAULT 0,
     file_type ENUM('TEXT', 'BLOB') NOT NULL,
 
@@ -31,13 +31,18 @@ CREATE TABLE user_file (
     created_at DATETIME NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE user__user_file__asignment (
+CREATE TABLE user__user_file__assignment (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
     user_id INT NOT NULL,
     user_file_id INT NOT NULL,
 
-    access_type ENUM('OWNER', 'EDITOR', 'READER') NOT NULL DEFAULT 'READER'
+    access_type ENUM('OWNER', 'EDITOR', 'READER') NOT NULL DEFAULT 'READER',
+
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (user_file_id) REFERENCES user_file(id),
+
+    UNIQUE KEY (user_id, user_file_id)
 );
 
 -- 

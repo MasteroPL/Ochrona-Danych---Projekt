@@ -1,0 +1,19 @@
+{% extends "base_nologin.html" %}
+{% block title %}Logowanie{% endblock %}
+
+{% from "helpers/_render_field.html" import render_field %}
+
+{% block body %}
+
+<span id="global-message">{{ global_message }}</span>
+
+<form method="POST">
+    {{ form.csrf_token }}
+
+    {{ render_field(form.login )}}
+    {{ render_field(form.password) }}
+    
+    <input type="submit" value="Zaloguj" />
+</form>
+
+{% endblock %}

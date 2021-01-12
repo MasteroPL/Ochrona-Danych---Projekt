@@ -1,0 +1,15 @@
+{% extends "base_nologin.html" %}
+{% block title %}Rejestracja{% endblock %}
+
+{% block body %}
+
+<form method="POST">
+    {{ form.csrf_token }}
+    {{ form.login.label }} {{ form.login }} <br />
+    {{ form.password.label }} {{ form.password }} <br />
+    {{ form.repeat_password.label }} {{ form.repeat_password }} <br />
+    
+    <input type="submit" value="Rejestruj" />
+</form>
+
+{% endblock %}
