@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Lista plików{% endblock %}
+
+{% block body %}
+
+<h4>Podgląd niedostępny</h4>
+<p>najprawdopodobniej notatka jest zbyt długa</p>
+<a href="/files/"><input type="button" value="Powrót" /></a>
+<a href="/files/download/{{ file_code }}"><input type="button" value="Pobierz" /></a>
+
+{% endblock %}

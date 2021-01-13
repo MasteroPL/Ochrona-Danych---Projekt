@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Wyświetl notatkę{% endblock %}
+
+{% block body %}
+<a href="/files/">Powrót</a>
+
+<h4>{{ file_name }}</h4>
+
+<section>
+    {% for line in file_content_lines %}
+        {{ line }}<br />
+    {% endfor %}
+</section>
+{% endblock %}

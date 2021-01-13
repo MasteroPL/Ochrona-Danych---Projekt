@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Prześlij plik{% endblock %}
 
+{% from "helpers/_render_field.html" import render_field %}
+
 {% block body %}
 
 <form method="POST" enctype="multipart/form-data">
     {{ form.csrf_token }}
-    {{ form.upload_file.label }} {{ form.upload_file }}
+    {{ render_field(form.upload_file) }}
+    {{ render_field(form.password) }}
+    {{ render_field(form.is_public) }}
     
     <input type="submit" value="Prześlij" />
 </form>

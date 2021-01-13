@@ -13,6 +13,12 @@ class User(UserMixin):
         self.id = id
         self.login = login
 
+    def to_json(self):
+        return {
+            "id": self.id,
+            "login": self.login
+        }
+
     def get_id(self):
         return str(self.id)
 

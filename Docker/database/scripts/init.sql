@@ -18,6 +18,7 @@ CREATE TABLE user_file (
     file_name VARCHAR(50) NOT NULL,
     is_public BOOLEAN NOT NULL DEFAULT 0,
     file_type ENUM('TEXT', 'BLOB') NOT NULL,
+    file_mime_type VARCHAR(50) NOT NULL,
 
     -- Jeśli tak, użytkownik podał hasło do odwracalnego zakodowania pliku
     -- Identyczne hasło musi zostać podane w celu odkodowania go

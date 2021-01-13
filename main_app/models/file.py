@@ -12,20 +12,18 @@ class File:
     def __init__(self, 
         db_id:int = None, 
         file_code:str = None,
-        file_bytes:BytesIO=None, 
+        file_bytes=None, 
         file_name:str=None, 
         file_path=None, 
         signature=None, 
         file_type=None, 
+        file_mime_type=None,
         is_public:bool = False, 
         file_manually_encoded:bool = False
     ):
         clazz = type(self)
-        self.db_id = None
+        self.db_id = db_id
         self.file_code = file_code
-        self.file_path = None
-        self.file_bytes = None
-        self.file_name = None
         self.signature = signature
         self.file_type = file_type
         self.nonce = None
@@ -36,9 +34,20 @@ class File:
         self.file_path = file_path
         self.file_bytes = file_bytes
         self.file_name = file_name
+        self.file_mime_type = file_mime_type
 
         if signature is not None:
             self.tag, self.nonce, self.seed = self.read_signature(signature)
+
+    def to_json(self):
+        return {
+            "id": self.db_id,
+            "file_code": self.file_code,
+            "file_name": self.file_name,
+            "file_type": self.file_type,
+            "is_public": self.is_public,
+            "file_manually_encoded": self.file_manually_encoded
+        }
 
     @classmethod
     def exists(clazz, id:int):
@@ -76,7 +85,7 @@ class File:
             mysql.commit()
 
             if cursor.rowcount == 0:
-                raise ValueError("Requested file does not exist")
+                raise FileDoesNotExistError()
 
             # signature = row.get("file_signature", None)
             # if signature is not None:
@@ -99,7 +108,7 @@ class File:
             })
 
             if cursor.rowcount == 0:
-                raise ValueError("Requested file does not exist")
+                raise FileDoesNotExistError()
 
             row = cursor.fetchone()
 
@@ -113,6 +122,7 @@ class File:
             file_name=sql_row.get("file_name", None),
             file_path=sql_row.get("file_path", None),
             file_type=sql_row.get("file_type", None),
+            file_mime_type=sql_row.get("file_mime_type", None),
             is_public=sql_row.get("is_public", False),
             file_manually_encoded=sql_row.get("file_manually_encoded", False),
             signature=sql_row.get("file_signature", None)
@@ -127,13 +137,13 @@ class File:
         nounce = signature[16:32]
         seed = signature[32:40]
 
-        print(len(tag))
-
         return tag, nounce, seed
 
     @classmethod
     def read_file(clazz, file_path):
-        with open("file_path", "wb") as source_file:
+        print(os.path.exists(file_path))
+
+        with open(file_path, "rb") as source_file:
             return source_file.read()
 
     @classmethod
@@ -174,7 +184,9 @@ class File:
         seed = os.urandom(8)
         if password is None:
             password_bytes = enc_settings.DEFAULT_ENCODING_PASSWORD + seed
+            self.file_manually_encoded = False
         else:
+            self.file_manually_encoded = True
             if len(password) > 24:
                 raise ValueError("Maximum password length is 24 bytes")
 
@@ -197,7 +209,7 @@ class File:
         clazz = type(self)
 
         if self.file_bytes is None or self.signature is None:
-            raise ValueError("File not valid for decryption")
+            raise FileError("File not valid for decryption")
 
         tag, nonce, seed = clazz.read_signature(self.signature)
 
@@ -219,7 +231,7 @@ class File:
     def read_file_from_path(self):
         clazz = type(self)
         if self.file_path is None:
-            raise ValueError("File path not assigned")
+            raise FileError("File path not assigned")
 
         self.file_bytes = clazz.read_file(self.file_path)
 
@@ -246,10 +258,11 @@ class File:
                         file_name, 
                         is_public, 
                         file_type, 
+                        file_mime_type,
                         file_manually_encoded, 
                         file_signature
                     ) VALUES (
-                        %(file_path)s, %(file_code)s, %(file_name)s, %(is_public)s, %(file_type)s, %(file_manually_encoded)s, %(file_signature)s
+                        %(file_path)s, %(file_code)s, %(file_name)s, %(is_public)s, %(file_type)s, %(file_mime_type)s, %(file_manually_encoded)s, %(file_signature)s
                     )
                 """, {
                     "file_path": self.file_path,
@@ -257,6 +270,7 @@ class File:
                     "file_name": self.file_name,
                     "is_public": self.is_public,
                     "file_type": self.file_type,
+                    "file_mime_type": self.file_mime_type,
                     "file_manually_encoded": self.file_manually_encoded,
                     "file_signature": self.signature
                 })
@@ -274,6 +288,7 @@ class File:
                         file_name=%(file_name)s,
                         is_public=%(is_public)s,
                         file_type=%(file_type)s,
+                        file_mime_type=%(file_mime_type)s,
                         file_manually_encoded=%(file_manually_encoded)s,
                         file_signature=%(file_signature)s
                     WHERE id=%(id)s
@@ -284,6 +299,7 @@ class File:
                     "file_name": self.file_name,
                     "is_public": self.is_public,
                     "file_type": self.file_type,
+                    "file_mime_type": self.file_mime_type,
                     "file_manually_encoded": self.file_manually_encoded,
                     "file_signature": self.signature
                 })
@@ -299,8 +315,6 @@ class File:
 
         if FileAssignment.exists(user, self):
             raise ValueError("Assignment already exists")
-
-        raise Exception()
 
         assignment = FileAssignment(
             access_type=access_type,
@@ -327,6 +341,38 @@ class File:
 
         assignment.delete()
 
+    def delete(self, commit=True):
+        if self.db_id is not None:
+            mysql.prepare_connection()
+            with mysql.cursor() as cursor:
+                try:
+                    cursor.execute("""
+                        DELETE FROM user__user_file__assignment
+                        WHERE user_file_id=%(id)s
+                    """, {
+                        "id": self.db_id
+                    })
+                    cursor.execute("""
+                        DELETE FROM user_file
+                        WHERE id=%(id)s
+                    """, {
+                        "id": self.db_id
+                    })
+
+                    if commit:
+                        mysql.commit()
+
+                    self.db_id = None
+
+                except Exception as e:
+                    mysql.rollback()
+                    raise e
+
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+            self.file_path = None
+                
+
     def assignment_exists(self, user:User):
         return FileAssignment.exists(user, self)
 
@@ -349,8 +395,8 @@ class File:
         
         file_name = secure_filename(file.filename)
 
-        if len(file_name) > 60:
-            file_name = file_name[0:50] + "___" + file_name[-10:]
+        if len(file_name) > 43:
+            file_name = file_name[0:30] + "..." + file_name[-10:]
 
         fbytes = file.stream._file.read()
         mime_type = file.mimetype
@@ -363,7 +409,8 @@ class File:
         return File(
             file_bytes=fbytes,
             file_name=file_name,
-            file_type=file_type
+            file_type=file_type,
+            file_mime_type=mime_type
         )
 
 
@@ -380,6 +427,14 @@ class FileAssignment:
         self.access_type = access_type
         self.user = user
         self.file = file
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "access_type": self.access_type,
+            "file": self.file.to_json() if self.file else None,
+            "user": self.user.to_json() if self.user else None
+        }
 
     @classmethod
     def exists(clazz, user:User, file:File):
@@ -515,8 +570,8 @@ class FileAssignment:
                 JOIN user_file uf ON uf.id = uufa.user_file_id
                 WHERE user_id=%(user_id)s AND user_file_id=%(user_file_id)s
             """, {
-                "user_id": user.id,
-                "user_file_id": file.db_id
+                "user_id": user_id,
+                "user_file_id": file_id
             })
 
             if cursor.rowcount == 0:
@@ -527,32 +582,61 @@ class FileAssignment:
             return clazz.from_sql_row(row)
 
     @classmethod
-    def get_user_assignments(clazz, user:User):
+    def get_user_assignments(clazz, user:User, access_type=None):
+        if access_type is not None and access_type != "OWNER" and access_type != "EDITOR" and access_type != "READER":
+            raise ValueError("Invalid access_type")
+
         mysql.prepare_connection()
         with mysql.cursor() as cursor:
-            cursor.execute("""
-                SELECT
-                    uufa.id AS 'assignment_id',
-                    uufa.access_type AS 'assignment_access_type',
+            if access_type is None:
+                cursor.execute("""
+                    SELECT
+                        uufa.id AS 'assignment_id',
+                        uufa.access_type AS 'assignment_access_type',
 
-                    u.id AS 'user_id',
-                    u.login AS 'user_login',
+                        u.id AS 'user_id',
+                        u.login AS 'user_login',
 
-                    uf.id AS 'file_id',
-                    uf.file_code AS 'file_code',
-                    uf.file_path AS 'file_path',
-                    uf.file_name AS 'file_name',
-                    uf.is_public AS 'file_is_public',
-                    uf.file_type AS 'file_type',
-                    uf.file_manually_encoded AS 'file_manually_encoded',
-                    uf.file_signature AS 'file_signature'
-                FROM user__user_file__assignment uufa
-                JOIN user u ON u.id = uufa.user_id
-                JOIN user_file uf ON uf.id = uufa.user_file_id
-                WHERE user_id=%(user_id)s
-            """, {
-                "user_id": user.id
-            })
+                        uf.id AS 'file_id',
+                        uf.file_code AS 'file_code',
+                        uf.file_path AS 'file_path',
+                        uf.file_name AS 'file_name',
+                        uf.is_public AS 'file_is_public',
+                        uf.file_type AS 'file_type',
+                        uf.file_manually_encoded AS 'file_manually_encoded',
+                        uf.file_signature AS 'file_signature'
+                    FROM user__user_file__assignment uufa
+                    JOIN user u ON u.id = uufa.user_id
+                    JOIN user_file uf ON uf.id = uufa.user_file_id
+                    WHERE user_id=%(user_id)s
+                """, {
+                    "user_id": user.id
+                })
+            else:
+                cursor.execute("""
+                    SELECT
+                        uufa.id AS 'assignment_id',
+                        uufa.access_type AS 'assignment_access_type',
+
+                        u.id AS 'user_id',
+                        u.login AS 'user_login',
+
+                        uf.id AS 'file_id',
+                        uf.file_code AS 'file_code',
+                        uf.file_path AS 'file_path',
+                        uf.file_name AS 'file_name',
+                        uf.is_public AS 'file_is_public',
+                        uf.file_type AS 'file_type',
+                        uf.file_manually_encoded AS 'file_manually_encoded',
+                        uf.file_signature AS 'file_signature'
+                    FROM user__user_file__assignment uufa
+                    JOIN user u ON u.id = uufa.user_id
+                    JOIN user_file uf ON uf.id = uufa.user_file_id
+                    WHERE user_id=%(user_id)s AND access_type=%(access_type)s
+                """, {
+                    "user_id": user.id,
+                    "access_type": access_type
+                })
 
             rows = cursor.fetchall()
 
@@ -611,3 +695,13 @@ class FileAssignment:
                 cursor.commit()
             self.id = None
 
+
+
+class FileError(Exception):
+    pass
+
+class FileDoesNotExistError(FileError):
+    pass
+
+class InvalidSignatureError(FileError):
+    pass
