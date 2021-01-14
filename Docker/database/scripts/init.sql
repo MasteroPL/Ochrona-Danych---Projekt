@@ -46,17 +46,6 @@ CREATE TABLE user__user_file__assignment (
     UNIQUE KEY (user_id, user_file_id)
 );
 
--- 
--- Walidacja user_file
--- 
--- DELIMITER $$
--- CREATE TRIGGER trggr__user_file__validate_create
--- BEFORE INSERT ON user_file FOR EACH ROW
--- BEGIN
---     IF NEW.file_encoded = 1 AND NEW.file_signature IS NULL THEN
---         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Encoded files must provide a signature';
---     END IF;
--- END$$
 
 DELIMITER $$
 CREATE TRIGGER trggr__user_file__auto_values_update
@@ -65,3 +54,15 @@ BEGIN
     SET NEW.updated_at = NOW();
 END$$
 DELIMITER ;
+
+
+CREATE TABLE failed_logins (
+    ip_address VARCHAR(30) NOT NULL,
+    user_id INT NULL,
+    created_at DATETIME NOT NULL DEFAULT NOW(),
+
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+CREATE INDEX failed_logins__ip_address
+ON failed_logins (ip_address);

@@ -3,6 +3,7 @@ from flask import render_template, request, session, jsonify, redirect
 from flask_login import login_user, logout_user
 import config as settings
 from models.user import User, UserDoesNotExistError, UserAlreadyRegisteredError
+from models.failed_login import FailedLogin
 import datetime
 
 from forms import LoginForm
@@ -13,6 +14,12 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
+        can_log_in, error = FailedLogin.verify_log_in(request.remote_addr, form.login.data)
+        if not can_log_in:
+            form.password.errors.append(error)
+
+            return render_template("auth/login.html", form=form, global_message=global_message)
+
         try:
             user = User.get_by_login(form.login.data)
 
@@ -21,8 +28,10 @@ def login():
 
                 return redirect("/files/")
             else:
+                FailedLogin.register_failed_attempt(request.remote_addr, user)
                 form.password.errors.append("Błędny login lub hasło")
         except UserDoesNotExistError:
+            FailedLogin.register_failed_attempt(request.remote_addr, None)
             form.password.errors.append("Błędny login lub hasło")
 
     return render_template("auth/login.html", form=form, global_message=global_message)
