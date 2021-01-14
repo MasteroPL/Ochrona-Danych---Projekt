@@ -8,6 +8,17 @@
 <a href="/files/">Powrót</a>
 
 <h4>{{ file_name }}</h4>
+<form method="POST" action="/files/change-public-status/{{ file_code }}">
+    {{ form_change_status.csrf_token }}
+    {% if file_is_public %}
+    Publiczny
+    <input type="hidden" name="is_public" value="false" />
+    {% else %}
+    Prywatny
+    <input type="hidden" name="is_public" value="true" />
+    {% endif %}
+    <input type="submit" value="Zmień" />
+</form>
 <h5>Udostępnij</h5>
 
 <form method="POST">

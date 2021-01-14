@@ -11,10 +11,11 @@ import jwt
 import datetime
 from Crypto.Cipher import AES
 
-@app.route("/home/", methods=["GET"])
-@login_required
-def home():
-    return render_template("common/home.html")
+@app.route("/", methods=["GET"])
+def index():
+    if current_user.is_authenticated:
+        return redirect("/files/")
+    return redirect("/login/")
 
 from forms import UploadFileForm
 @app.route("/files/upload/", methods=["GET", "POST"])
@@ -33,7 +34,7 @@ def upload_file():
             form.upload_file.errors.append("Niepoprawny plik")
             return render_template("common/files__upload.html", form=form)
 
-        if form.password.data == '':
+        if form.password.data == '' or form.password.data == None:
             password = None
         else:
             password = form.password.data
@@ -51,12 +52,57 @@ def upload_file():
         except Exception as e:
             mysql.rollback()
             ofile.delete()
-            return jsonify({"msg": str(e)}), 500
+            return render_template("common/files__new_note.html",
+                form = form,
+                global_info = "Wystąpił błąd serwera"
+            )
         
 
         return redirect("/files/")
 
     return render_template("common/files__upload.html", form=form)
+
+from forms import NewNoteForm
+@app.route("/files/new-note/", methods=["GET", "POST"])
+@login_required
+def files_new_note():
+    form = NewNoteForm()
+
+    if form.validate_on_submit():
+        password = form.password.data
+        if password == '':
+            password = None
+
+        ofile = File(
+            file_bytes=form.note.data.encode("utf-8"),
+            file_name=form.title.data,
+            file_type="TEXT",
+            file_mime_type="text/plain",
+            is_public=form.is_public.data
+        )
+        ofile.encrypt(password)
+        ofile.generate_unique_path(settings.USER_FILE_BASE_PATH)
+        ofile.save_to_files()
+
+        try:
+            ofile.save_to_database(commit=False)
+            ofile.assign_user(current_user, "OWNER", commit=False)
+            mysql.commit()
+        
+        except Exception as e:
+            mysql.rollback()
+            ofile.delete()
+            return render_template("common/files__new_note.html",
+                form = form,
+                global_info = "Wystąpił błąd serwera"
+            )
+
+        return redirect("/files/")
+
+
+    return render_template("common/files__new_note.html",
+        form = form
+    )
 
 @app.route("/files/", methods=["GET"])
 @login_required
@@ -250,12 +296,15 @@ def file_share(file_code):
             shares_json.append(share.to_json())
 
     form_unshare = FileUnshareForm()
+    form_change_status = FileChangePublicStatusForm()
     return render_template("common/files__share.html",
         shares=shares_json,
         form=form,
         file_name=file.file_name,
         file_code=file_code,
-        form_unshare=form_unshare
+        form_unshare=form_unshare,
+        file_is_public=file.is_public,
+        form_change_status=form_change_status
     )
 
 @app.route("/files/unshare/<string:file_code>", methods=["POST"])
@@ -286,6 +335,28 @@ def file_unshare(file_code):
             form.user_id.errors.append("Użytkownik nieprzypisany do tego pliku")
 
     return redirect("/files/share/" + file_code + "?info=Wyst%C4%85pi%C5%82%20b%C5%82%C4%85d%20przy%20pr%C3%B3bie%20usuni%C4%99cia%20udost%C4%99pnienia")
+
+from forms import FileChangePublicStatusForm
+@app.route("/files/change-public-status/<string:file_code>", methods=["POST"])
+@login_required
+def file_change_public_status(file_code):
+    try:
+        file = File.get_by_file_code(file_code)
+    except FileDoesNotExistError:
+        abort(404)
+
+    assignment = FileAssignment.get_assignment(current_user, file)
+
+    if assignment is None or assignment.access_type != "OWNER":
+        abort(404)
+
+    form = FileChangePublicStatusForm()
+    if form.validate_on_submit():
+        file.is_public = form.is_public.data
+        file.save_to_database()
+        return redirect("/files/share/" + file_code)
+
+    abort(404)
 
 @app.route("/files/remove-my-assignment/<string:file_code>", methods=["GET", "POST"])
 @login_required
