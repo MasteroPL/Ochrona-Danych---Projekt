@@ -6,3 +6,4 @@ pyopenssl==20.0.1
 mysql-connector
 pymysql
 passlib==1.7.4
+PyJWT==2.0.0

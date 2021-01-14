@@ -1,13 +1,15 @@
 {% extends "base_nologin.html" %}
 {% block title %}Rejestracja{% endblock %}
 
+{% from "helpers/_render_field.html" import render_field %}
+
 {% block body %}
 
 <form method="POST">
     {{ form.csrf_token }}
-    {{ form.login.label }} {{ form.login }} <br />
-    {{ form.password.label }} {{ form.password }} <br />
-    {{ form.repeat_password.label }} {{ form.repeat_password }} <br />
+    {{ render_field(form.login) }}
+    {{ render_field(form.password) }}
+    {{ render_field(form.repeat_password) }}
     
     <input type="submit" value="Rejestruj" />
 </form>

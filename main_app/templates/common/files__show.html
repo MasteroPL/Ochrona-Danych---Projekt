@@ -2,7 +2,9 @@
 {% block title %}Wyświetl notatkę{% endblock %}
 
 {% block body %}
-<a href="/files/">Powrót</a>
+{% if is_authenticated %}
+    <a href="/files/">Powrót</a>
+{% endif %}
 
 <h4>{{ file_name }}</h4>
 

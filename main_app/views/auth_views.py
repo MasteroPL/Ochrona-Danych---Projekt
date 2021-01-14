@@ -19,7 +19,7 @@ def login():
             if user.verify_password(form.password.data):
                 login_user(user, duration=datetime.timedelta(hours=1))
 
-                return redirect("/home/")
+                return redirect("/files/")
             else:
                 form.password.errors.append("Błędny login lub hasło")
         except UserDoesNotExistError:

@@ -314,7 +314,7 @@ class File:
             raise ValueError("Invalid user")
 
         if FileAssignment.exists(user, self):
-            raise ValueError("Assignment already exists")
+            raise UserAlreadyAssignedError()
 
         assignment = FileAssignment(
             access_type=access_type,
@@ -337,7 +337,7 @@ class File:
     def remove_user(self, user:User):
         assignment = FileAssignment.get_assignment(user, self)
         if assignment is None:
-            raise ValueError("Assignment doesn't exist")
+            raise FileAssignmentDoesNotExistError()
 
         assignment.delete()
 
@@ -692,7 +692,7 @@ class FileAssignment:
                 "id": self.id
             })
             if commit:
-                cursor.commit()
+                mysql.commit()
             self.id = None
 
 
@@ -704,4 +704,13 @@ class FileDoesNotExistError(FileError):
     pass
 
 class InvalidSignatureError(FileError):
+    pass
+
+class FileAssignmentError(Exception):
+    pass
+
+class FileAssignmentDoesNotExistError(FileAssignmentError):
+    pass
+
+class UserAlreadyAssignedError(FileAssignmentError):
     pass

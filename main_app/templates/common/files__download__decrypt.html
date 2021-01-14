@@ -1,5 +1,5 @@
 {% extends "base_nologin.html" %}
-{% block title %}Logowanie{% endblock %}
+{% block title %}Pobieranie{% endblock %}
 
 {% from "helpers/_render_field.html" import render_field %}
 
@@ -10,7 +10,9 @@
 
     {{ render_field(form.password) }}
     
-    <a href="/files/"><input type="button" value="Powrót" /></a>
+    {% if is_authenticated %}
+        <a href="/files/"><input type="button" value="Powrót" /></a>
+    {% endif %}
     <input type="submit" value="Pobierz" />
 </form>
 

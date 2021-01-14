@@ -3,6 +3,8 @@
 
 {% block body %}
 
+<a href="/files/upload/">Dodaj plik</a>
+
 <h4>Moje pliki</h4>
 <table>
     <thead>
@@ -38,10 +40,11 @@
             <td>
                 {% if assignment["file"]["file_type"] == "TEXT" %}
                     <a href='/files/show/{{ assignment["file"]["file_code"] }}'>Wyświetl</a>,
+                    <a href='/files/edit/{{ assignment["file"]["file_code"] }}'>Edytuj</a>, 
                 {% endif %}
-                <a href='/files/edit/{{ assignment["file"]["file_code"] }}/'>Edytuj</a>, 
+                <a href='/files/rename/{{ assignment["file"]["file_code"] }}'>Zmień nazwę</a>, 
                 <a href='/files/delete/{{ assignment["file"]["file_code"] }}'>Usuń</a>, 
-                Udostępnij, 
+                <a href='/files/share/{{ assignment["file"]["file_code"] }}'>Udostępnij</a>, 
                 <a href='/files/download/{{ assignment["file"]["file_code"] }}' target="_blank">Pobierz</a>
             </td>
         </tr>
@@ -56,6 +59,8 @@
     <thead>
         <tr>
             <th>Nazwa pliku</th>
+            <th>Typ</th>
+            <th>Dostęp</th>
             <th>Informacje</th>
             <th>Akcje</th>
         </tr>
@@ -65,8 +70,43 @@
     {% for assignment in shared_assignments %}
         <tr>
             <td>{{ assignment["file"]["file_name"] }}</td>
-            <td>Tu będą info</td>
-            <td>Edytuj, Usuń, Udostępnij, Pobierz</td>
+            <td>
+                {% if assignment["file"]["file_type"] == "TEXT" %}
+                Notatka
+                {% else %}
+                Plik
+                {% endif %}
+            </td>
+            <td>
+                {% if assignment["access_type"] == "EDITOR" %}
+                Edytor
+                {% else %}
+                Odczyt
+                {% endif %}
+            </td>
+            <td>
+                {% if assignment["file"]["is_public"] %}
+                publiczny
+                {% else %}
+                prywatny
+                {% endif %}
+                {% if assignment["file"]["file_manually_encoded"] %}
+                szyfrowany
+                {% endif %}
+            </td>
+            <td>
+                {% if assignment["file"]["file_type"] == "TEXT" %}
+                    <a href='/files/show/{{ assignment["file"]["file_code"] }}'>Wyświetl</a>,
+                {% endif %}
+                {% if assignment["access_type"] == "EDITOR" %}
+                    {% if assignment["file"]["file_type"] == "TEXT" %}
+                        <a href='/files/edit/{{ assignment["file"]["file_code"] }}'>Edytuj</a>, 
+                    {% endif %}
+                    <a href='/files/rename/{{ assignment["file"]["file_code"] }}'>Zmień nazwę</a>, 
+                {% endif %}
+                <a href='/files/remove-my-assignment/{{ assignment["file"]["file_code"] }}'>Usuń</a>, 
+                <a href='/files/download/{{ assignment["file"]["file_code"] }}' target="_blank">Pobierz</a>
+            </td>
         </tr>
     {% endfor %}
     </tbody>

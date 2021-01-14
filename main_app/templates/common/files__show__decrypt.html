@@ -10,7 +10,9 @@
 
     {{ render_field(form.password) }}
     
-    <a href="/files/"><input type="button" value="Powrót" /></a>
+    {% if is_authenticated %}
+        <a href="/files/"><input type="button" value="Powrót" /></a>
+    {% endif %}
     <input type="submit" value="Pokaż" />
 </form>
 
