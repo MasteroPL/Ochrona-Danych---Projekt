@@ -1,0 +1,21 @@
+{% extends "base_nologin.html" %}
+{% block title %}Edycja pliku{% endblock %}
+
+{% from "helpers/_render_field.html" import render_field %}
+
+{% block body %}
+
+<h4>{{ file_name }}</h4>
+
+<span id="global-message">{{ global_message }}</span>
+
+<form method="POST">
+    {{ form.csrf_token }}
+
+    {{ render_field(form.content) }}
+    
+    <a href="/files/"><input type="button" value="Powrót" /></a>
+    <input type="submit" value="Zapisz" />
+</form>
+
+{% endblock %}

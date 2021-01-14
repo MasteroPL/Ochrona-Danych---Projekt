@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Udostępnij{% endblock %}
+
+{% from "helpers/_render_field.html" import render_field %}
+
+{% block body %}
+
+<a href="/files/">Powrót</a>
+
+<h4>{{ file_name }}</h4>
+<h5>Udostępnij</h5>
+
+<form method="POST">
+    {{ form.csrf_token }}
+
+    {{ render_field(form.username) }}
+    {{ render_field(form.access_type) }}
+
+    <input type="submit" value="Udostępnij" />
+</form>
+
+<h5>Udostępnienia</h5>
+
+<table>
+    <thead>
+        <tr>
+            <th>Użytkownik</th>
+            <th>Typ dostępu</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for share in shares %}
+        <tr>
+            <td>{{ share["user"]["login"] }}</td>
+            <td>
+                {% if share["access_type"] == "EDITOR" %}
+                Edytor
+                {% else %}
+                Odczyt
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="/files/unshare/{{ file_code }}">
+                    {{ form_unshare.csrf_token }}
+
+                    <input type="hidden" value='{{ share["user"]["id"] }}' name="user_id" />
+
+                    <input type="submit" value="Usuń" />
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

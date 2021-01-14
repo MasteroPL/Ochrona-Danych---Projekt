@@ -1,0 +1,18 @@
+{% extends "base_nologin.html" %}
+{% block title %}Usuń plik{% endblock %}
+
+{% from "helpers/_render_field.html" import render_field %}
+
+{% block body %}
+
+<h4>{{ file_name }}</h4>
+<form method="POST">
+    {{ form.csrf_token }}
+    
+    <a href="/files/"><input type="button" value="Anuluj" /></a>
+    <input type="submit" value="Usuń plik" />
+</form>
+
+Plik zostanie usunięty tylko dla Ciebie. Właściciel pliku oraz pozostałe osoby dla których został udostępniony nadal będą go widzieć.
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base_nologin.html" %}
+{% block title %}Edytuj notatkę{% endblock %}
+
+{% from "helpers/_render_field.html" import render_field %}
+
+{% block body %}
+
+<form method="POST">
+    {{ form.csrf_token }}
+
+    {{ render_field(form.password) }}
+    
+    <a href="/files/"><input type="button" value="Powrót" /></a>
+    <input type="submit" value="Dekoduj" />
+</form>
+
+{% endblock %}
