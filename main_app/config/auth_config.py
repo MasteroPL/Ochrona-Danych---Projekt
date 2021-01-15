@@ -1,8 +1,8 @@
 import os
 
-tmp = os.getenv("PASSWORD_HASH_SALT")
+tmp = os.getenv("PASSWORD_HASH_PEPPER")
 if tmp is not None:
-    PASSWORD_HASH_SALT = tmp
+    PASSWORD_HASH_PEPPER = tmp
 else:
-    PASSWORD_HASH_SALT = "oZ#hQ"
-    print("PASSWORD_HASH_SALT not found, setting to default")
+    PASSWORD_HASH_PEPPER = "oZ#hQ"
+    print("PASSWORD_HASH_PEPPER not found, setting to default")

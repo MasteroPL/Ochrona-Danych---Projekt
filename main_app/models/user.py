@@ -143,7 +143,9 @@ class User(UserMixin):
             if clazz.login_exists(self.login):
                 raise UserAlreadyRegisteredError()
 
-            password_hash = pbkdf2_sha256.hash(password + settings.PASSWORD_HASH_SALT)
+            # Hashowanie zawiera z pudełka sól (16 bajtów losowo generowanych przez bibliotekę, taka implementacja jest zalecana)
+            # oraz wielokrotne hashowanie (29000 rund domyślnie, można zmienić)
+            password_hash = pbkdf2_sha256.hash(password + settings.PASSWORD_HASH_PEPPER)
 
             cursor.execute("""
                 INSERT INTO user (
@@ -180,7 +182,7 @@ class User(UserMixin):
             row = cursor.fetchone()
             pass_hash = row["password_hash"]
 
-            return pbkdf2_sha256.verify(password + settings.PASSWORD_HASH_SALT, pass_hash)
+            return pbkdf2_sha256.verify(password + settings.PASSWORD_HASH_PEPPER, pass_hash)
 
 
 
