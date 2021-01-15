@@ -10,3 +10,16 @@
 {% endif %}
 </dd>
 {% endmacro %}
+
+{% macro render_field_with_info(field) %}
+<dt>{{ field.label }}</dt>
+<dd>{{ field(**kwargs)|safe }} <br /> <span id="field-{{ field.name }}-info"></span>
+{% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+        <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+</dd>
+{% endmacro %}

@@ -1,14 +1,14 @@
 {% extends "base_nologin.html" %}
 {% block title %}Rejestracja{% endblock %}
 
-{% from "helpers/_render_field.html" import render_field %}
+{% from "helpers/_render_field.html" import render_field, render_field_with_info %}
 
 {% block body %}
 
 <form method="POST">
     {{ form.csrf_token }}
     {{ render_field(form.login) }}
-    {{ render_field(form.password) }}
+    {{ render_field_with_info(form.password, onchange="passwordChanged(this)") }}
     {{ render_field(form.repeat_password) }}
     
     <input type="submit" value="Rejestruj" />
@@ -17,4 +17,33 @@
 Masz już konto?
 <a href="/login/">Zaloguj się</a>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/entropy.js"></script>
+<script>
+    function passwordChanged(el){
+        var pass = el.value;
+        if(pass.length == 0){
+            document.getElementById("field-password-info").innerHTML = "";
+        }
+        else{
+            var entropy = getEntropy(el.value);
+            console.log(entropy);
+            var strength = "";
+
+            if(entropy < 3){
+                strength = "Słabe";
+            }
+            else if(entropy < 3.4){
+                strength = "Średnie";
+            }
+            else{
+                strength = "Silne";
+            }
+
+            document.getElementById("field-password-info").innerHTML = strength;
+        }
+    }
+</script>
 {% endblock %}
