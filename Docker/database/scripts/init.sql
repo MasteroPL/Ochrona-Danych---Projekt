@@ -26,7 +26,7 @@ CREATE TABLE user_file (
     file_manually_encoded BOOLEAN NOT NULL DEFAULT 0,
 
     -- Sygnatura potrzebna tylko jeśli plik jest zakodowany
-    file_signature VARBINARY(48) NOT NULL,
+    file_signature VARBINARY(40) NOT NULL,
 
     updated_at DATETIME NOT NULL DEFAULT NOW(),
     created_at DATETIME NOT NULL DEFAULT NOW()

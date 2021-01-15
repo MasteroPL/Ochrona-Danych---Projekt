@@ -6,10 +6,10 @@ from models.mysql import MySQL
 app = Flask(__name__, static_url_path="/static/", static_folder="static", template_folder="templates")
 app.secret_key = config.APP_SECRET
 mysql = MySQL(
-    "root",
-    "Qwertyui123!",
-    "127.0.0.1",
-    "fileshare",
+    config.DATABASE_USER,
+    config.DATABASE_PASSWORD,
+    config.DATABASE_HOST,
+    config.DATABASE_DB_NAME,
     autocommit=False
 )
 login_manager = FlaskLoginManager()

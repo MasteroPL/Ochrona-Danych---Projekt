@@ -1,6 +1,7 @@
 version: "3"
 services:
   mysql-db:
+    container_name: od-mysql-db-01142604
     image: mysql:5.7
     command: --default-authentication-plugin=mysql_native_password
     restart: always
@@ -16,5 +17,23 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8081:8080
     
+  web-main:
+    container_name: od-web-main-01142604
+    build:
+      context: .
+      dockerfile: ./Docker/main_app/Dockerfile
+    ports: ["8080:8880"]
+    restart: always
+    volumes: [./main_app:/static_app]
+    environment:
+      PASSWORD_HASH_PEPPER: $PASSWORD_HASH_PEPPER
+      DECRYPTION_TOKEN_JWT_DURATION: $DECRYPTION_TOKEN_JWT_DURATION
+      USER_FILE_BASE_PATH: $USER_FILE_BASE_PATH
+      DATABASE_HOST: $DATABASE_HOST
+      DATABASE_USER: $DATABASE_USER
+      DATABASE_PASSWORD: $DATABASE_PASSWORD
+      DATABASE_DB_NAME: $DATABASE_DB_NAME
+    depends_on:
+      - mysql-db
